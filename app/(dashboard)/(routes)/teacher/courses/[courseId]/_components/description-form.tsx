@@ -12,62 +12,69 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Course } from "@prisma/client";
 
-interface TitleFormProps {
+interface DescriptionFormProps {
   initialData: Course;
-  courseId: string;
+  courseId: string
 }
 
 const formSchema = z.object({
-  title: z.string().min(1, {
-    message: 'Title is required'
-  })
-})
-const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
-  const router = useRouter()
+  description: z.string().min(1, {
+    message: "Description is required",
+  }),
+});
+const DescriptionForm = ({ initialData, courseId }: DescriptionFormProps) => {
+  const router = useRouter();
   const [isEditing, setEditing] = useState(false);
   const toggleEdit = () => {
-    setEditing((current) => !current)
-  }
+    setEditing((current) => !current);
+  };
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData 
-  })
-  
+    defaultValues: {description: initialData?.description || ''},
+  });
+
   const { isSubmitting, isValid } = form.formState;
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/courses/${courseId}`, values)
-      toast.success('Course updated!')
+      await axios.patch(`/api/courses/${courseId}`, values);
+      toast.success("Course updated!");
       toggleEdit();
-      router.refresh()
+      router.refresh();
     } catch (error) {
-      toast.error('Something went wrong!')
+      toast.error("Something went wrong!");
     }
-  }
+  };
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4 ">
       <div className="font-medium flex items-center justify-between">
-        Course title
+        Course description
         <Button variant="ghost" onClick={toggleEdit}>
-          {isEditing
-            ? (<>Cancel</>)
-            : (<>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit title
-              </>
-            )}
+          {isEditing ? (
+            <>Cancel</>
+          ) : (
+            <>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit description
+            </>
+          )}
         </Button>
       </div>
       {!isEditing && (
-        <p className="text-sm mt-2">
-          {initialData.title}
+        <p
+          className={cn(
+            "text-sm mt-2",
+            !initialData.description && "text-slate-500 italic"
+          )}
+        >
+          {initialData.description || "No description"}
         </p>
       )}
       {isEditing && (
@@ -78,25 +85,22 @@ const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
           >
             <FormField
               control={form.control}
-              name='title'
+              name="description"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input
+                    <Textarea
                       disabled={isSubmitting}
-                      placeholder="e.g. 'Advance web development'"
+                      placeholder="e.g. 'This course is about ...'"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />
             <div className="flex items-center gap-x-2">
-              <Button
-                disabled={isSubmitting || !isValid}
-                type='submit'
-              >
+              <Button disabled={isSubmitting || !isValid} type="submit">
                 Save
               </Button>
             </div>
@@ -105,6 +109,6 @@ const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
       )}
     </div>
   );
-}
+};
  
-export default TitleForm;
+export default DescriptionForm;

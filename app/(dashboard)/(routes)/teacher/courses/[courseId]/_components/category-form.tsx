@@ -12,62 +12,73 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Course } from "@prisma/client";
+import { Combobox } from "@/components/ui/combobox";
 
-interface TitleFormProps {
+interface CategoryFormProps {
   initialData: Course;
   courseId: string;
+  options: { label: string; value: string }[];
 }
 
 const formSchema = z.object({
-  title: z.string().min(1, {
-    message: 'Title is required'
-  })
-})
-const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
-  const router = useRouter()
+  categoryId: z.string().min(1, {
+    message: "Category is required",
+  }),
+});
+const CategoryForm = ({ initialData, courseId, options }: CategoryFormProps) => {
+  const router = useRouter();
   const [isEditing, setEditing] = useState(false);
   const toggleEdit = () => {
-    setEditing((current) => !current)
-  }
+    setEditing((current) => !current);
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData 
-  })
-  
+    defaultValues: { categoryId: initialData?.categoryId || "" },
+  });
+
   const { isSubmitting, isValid } = form.formState;
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/courses/${courseId}`, values)
-      toast.success('Course updated!')
+      await axios.patch(`/api/courses/${courseId}`, values);
+      toast.success("Course updated!");
       toggleEdit();
-      router.refresh()
+      router.refresh();
     } catch (error) {
-      toast.error('Something went wrong!')
+      toast.error("Something went wrong!");
     }
-  }
+  };
+  const selectedOption = options.find((option) => option.value === initialData.categoryId )
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4 ">
       <div className="font-medium flex items-center justify-between">
-        Course title
+        Course category
         <Button variant="ghost" onClick={toggleEdit}>
-          {isEditing
-            ? (<>Cancel</>)
-            : (<>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit title
-              </>
-            )}
+          {isEditing ? (
+            <>Cancel</>
+          ) : (
+            <>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit category
+            </>
+          )}
         </Button>
       </div>
       {!isEditing && (
-        <p className="text-sm mt-2">
-          {initialData.title}
+        <p
+          className={cn(
+            "text-sm mt-2",
+            !initialData.categoryId && "text-slate-500 italic"
+          )}
+        >
+          {selectedOption?.label || "No category"}
         </p>
       )}
       {isEditing && (
@@ -78,25 +89,21 @@ const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
           >
             <FormField
               control={form.control}
-              name='title'
+              name="categoryId"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input
-                      disabled={isSubmitting}
-                      placeholder="e.g. 'Advance web development'"
+                    <Combobox
+                      options={...options}
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage/>
+                  <FormMessage />
                 </FormItem>
               )}
             />
             <div className="flex items-center gap-x-2">
-              <Button
-                disabled={isSubmitting || !isValid}
-                type='submit'
-              >
+              <Button disabled={isSubmitting || !isValid} type="submit">
                 Save
               </Button>
             </div>
@@ -105,6 +112,6 @@ const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
       )}
     </div>
   );
-}
+};
  
-export default TitleForm;
+export default CategoryForm;
