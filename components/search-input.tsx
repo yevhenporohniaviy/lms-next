@@ -38,7 +38,6 @@ export const SearchInput = () => {
       <Search className="h-4 w-4 absolute top-3 left-3 text-slate-600" />
       <Input
         onChange={(e) => { 
-          console.log(e.target.value)
           setValue(e.target.value);
         }}
         value={value}
